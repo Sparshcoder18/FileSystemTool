@@ -1,0 +1,4 @@
+__pycache__/
+*.pyc
+data/disk_state.json
+logs/journal.log
