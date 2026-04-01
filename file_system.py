@@ -1,10 +1,13 @@
+from recovery import RecoveryManager
 from disk import VirtualDisk
-
-
+from optimization import OptimizationManager
+from disk import BLOCK_SIZE
 class FileSystem:
     def __init__(self):
         self.disk = VirtualDisk()
-        self.file_table = {}   # filename → list of blocks
+        self.recovery = RecoveryManager()
+        self.file_table = {}
+        self.optimizer = OptimizationManager(self)
 
     # ----------------------------
     # Create File
@@ -21,9 +24,13 @@ class FileSystem:
     # Write File
     # ----------------------------
     def write_file(self, filename, data):
+        self.recovery.log(f"WRITE|{filename}|{data}")
+        
         if filename not in self.file_table:
             print("File does not exist.")
             return
+
+        self.recovery.log(f"WRITE|{filename}|{data}")
 
         # Free old blocks if rewriting
         old_blocks = self.file_table[filename]
