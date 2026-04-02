@@ -96,3 +96,17 @@ class FileSystem:
         print("\n--- BLOCK MAP ---")
         for file, blocks in self.file_table.items():
             print(f"{file} -> {blocks}")
+
+    # ----------------------------
+    # Search File
+    # ----------------------------
+    def search_file(self, filename):
+        print("\n--- FILE SEARCH ---")
+
+        if filename in self.file_table:
+            info = self.file_table[filename]
+            print(f"✅ File '{filename}' found")
+            print(f"Blocks: {info['blocks']}")
+            print(f"Size: {info['size']} bytes")
+        else:
+            print(f"❌ File '{filename}' not found")
