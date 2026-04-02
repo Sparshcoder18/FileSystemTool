@@ -16,3 +16,5 @@ fs.show_files()
 
 # Show disk
 fs.disk.display_disk()
+
+fs.disk.display_compact()

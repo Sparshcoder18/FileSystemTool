@@ -97,3 +97,15 @@ class VirtualDisk:
         self.blocks = [""] * TOTAL_BLOCKS
         self.bitmap = [0] * TOTAL_BLOCKS
         self.save_disk()
+
+# ----------------------------
+# Compact Disk Visualization
+# ----------------------------
+def display_compact(self):
+    print("\n--- COMPACT DISK VIEW ---")
+    for i in range(len(self.blocks)):
+        if self.bitmap[i]:
+            print(f"[{i}:USED]", end=" ")
+        else:
+            print(f"[{i}:FREE]", end=" ")
+    print()
