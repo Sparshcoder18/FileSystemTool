@@ -56,3 +56,6 @@ fs.search_file("file2")
 fs.search_file("fileX")  # test missing file
 
 fs.list_files_sorted_by_size()
+
+fs.append_file("file2", "APPEND_TEST")
+fs.read_file("file2")

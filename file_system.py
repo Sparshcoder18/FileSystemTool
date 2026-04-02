@@ -1,3 +1,5 @@
+from fileinput import filename
+
 from recovery import RecoveryManager
 from disk import VirtualDisk
 from optimization import OptimizationManager
@@ -129,3 +131,18 @@ class FileSystem:
 
         for file, info in sorted_files:
             print(f"{file} → {info['size']} bytes")
+    
+    # ----------------------------
+    # Append Data to File
+    # ----------------------------
+    def append_file(self, filename, data):
+        if filename not in self.file_table:
+            print("File not found.")
+            return
+
+        old_data = self.disk.read_blocks(self.file_table[filename]["blocks"])
+        new_data = old_data + data
+
+        print(f"Appending data to '{filename}'...")
+
+        self.write_file(filename, new_data)
