@@ -27,6 +27,9 @@ fs.optimizer.calculate_fragmentation()
 # Show disk
 fs.disk.display_disk()
 
+
+fs.disk.show_disk_stats()
+
 fs.disk.display_compact()
 # Defragment
 fs.optimizer.defragment()

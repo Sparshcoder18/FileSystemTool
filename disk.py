@@ -109,3 +109,19 @@ class VirtualDisk:
             else:
                 print(f"[{i}:FREE]", end=" ")
         print()
+
+        # ----------------------------
+# Disk Usage Statistics
+# ----------------------------
+def show_disk_stats(self):
+    total = len(self.blocks)
+    used = sum(self.bitmap)
+    free = total - used
+
+    usage_percent = (used / total) * 100
+
+    print("\n--- DISK STATS ---")
+    print(f"Total Blocks: {total}")
+    print(f"Used Blocks: {used}")
+    print(f"Free Blocks: {free}")
+    print(f"Usage: {usage_percent:.2f}%")
