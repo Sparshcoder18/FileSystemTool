@@ -110,3 +110,22 @@ class FileSystem:
             print(f"Size: {info['size']} bytes")
         else:
             print(f"❌ File '{filename}' not found")
+
+            # ----------------------------
+    # List Files Sorted by Size
+    # ----------------------------
+    def list_files_sorted_by_size(self):
+        if not self.file_table:
+            print("No files present.")
+            return
+
+        print("\n--- FILES SORTED BY SIZE ---")
+
+        sorted_files = sorted(
+            self.file_table.items(),
+            key=lambda item: item[1]["size"],
+            reverse=True
+        )
+
+        for file, info in sorted_files:
+            print(f"{file} → {info['size']} bytes")
