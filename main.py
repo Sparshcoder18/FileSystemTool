@@ -46,3 +46,5 @@ print("\n--- PERFORMANCE AFTER ---")
 fs.optimizer.measure_read_time("file2")
 
 print("\n💡 Optimization improved data locality and reduced access time.")
+
+fs.show_block_map()

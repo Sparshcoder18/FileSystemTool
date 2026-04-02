@@ -87,3 +87,11 @@ class FileSystem:
         print("\n--- FILE TABLE ---")
         for name, blocks in self.file_table.items():
             print(f"{name} → {blocks}")
+
+            # ----------------------------
+# Show Block Mapping
+# ----------------------------
+def show_block_map(self):
+    print("\n--- BLOCK MAP ---")
+    for file, blocks in self.file_table.items():
+        print(f"{file} -> {blocks}")
