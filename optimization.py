@@ -3,93 +3,52 @@ import time
 
 
 class OptimizationManager:
-    def __init__(self, file_system):
-        self.fs = file_system
+    def __init__(self, fs):
+        self.fs = fs
 
-    # ----------------------------
-    # Calculate Fragmentation
-    # ----------------------------
     def calculate_fragmentation(self):
-        fragmented_files = 0
-
-        for file, info in self.fs.file_table.items():
+        fragmented = 0
+        for f, info in self.fs.file_table.items():
             blocks = info["blocks"]
+            if any(blocks[i]+1 != blocks[i+1] for i in range(len(blocks)-1)):
+                fragmented += 1
 
-            if len(blocks) <= 1:
-                continue
+        total = len(self.fs.file_table)
+        if total:
+            print(f"📉 Fragmentation: {(fragmented/total)*100:.2f}%")
 
-            sorted_blocks = sorted(blocks)
-
-            for i in range(len(sorted_blocks) - 1):
-                if sorted_blocks[i] + 1 != sorted_blocks[i + 1]:
-                    fragmented_files += 1
-                    break
-
-        total_files = len(self.fs.file_table)
-
-        if total_files == 0:
-            print("No files present.")
-            return
-
-        fragmentation_percent = (fragmented_files / total_files) * 100
-        print(f"📉 Fragmentation: {fragmentation_percent:.2f}%")
-
-    # ----------------------------
-    # Defragmentation
-    # ----------------------------
     def defragment(self):
         print("⚡ Starting defragmentation...")
 
-        new_blocks = [""] * len(self.fs.disk.blocks)
-        new_bitmap = [0] * len(self.fs.disk.bitmap)
+        new_blocks = [""]*len(self.fs.disk.blocks)
+        new_bitmap = [0]*len(self.fs.disk.bitmap)
+        ptr = 0
+        new_table = {}
 
-        current_block = 0
-        new_file_table = {}
-
-        for file, info in self.fs.file_table.items():
-            blocks = info["blocks"]
-            data = self.fs.disk.read_blocks(blocks)
-
+        for f, info in self.fs.file_table.items():
+            data = self.fs.disk.read_blocks(info["blocks"])
             chunks = [data[i:i+BLOCK_SIZE] for i in range(0, len(data), BLOCK_SIZE)]
 
-            new_indices = []
-
+            indices = []
             for chunk in chunks:
-                if current_block >= len(new_blocks):
-                    print("Disk overflow during defragmentation!")
-                    return
+                new_blocks[ptr] = chunk
+                new_bitmap[ptr] = 1
+                indices.append(ptr)
+                ptr += 1
 
-                new_blocks[current_block] = chunk
-                new_bitmap[current_block] = 1
-                new_indices.append(current_block)
-                current_block += 1
+            new_table[f] = {"blocks": indices, "size": len(data)}
 
-            new_file_table[file] = {
-                "blocks": new_indices,
-                "size": len(data)
-            }
-
-        # Apply changes
         self.fs.disk.blocks = new_blocks
         self.fs.disk.bitmap = new_bitmap
-        self.fs.file_table = new_file_table
-
+        self.fs.file_table = new_table
         self.fs.disk.save_disk()
+        self.fs.save_file_table()
 
         print("✔ Defragmentation completed.")
 
-    # ----------------------------
-    # Measure Read Performance
-    # ----------------------------
     def measure_read_time(self, filename):
         if filename not in self.fs.file_table:
-            print("File not found.")
             return
-
-        blocks = self.fs.file_table[filename]["blocks"]
-
         start = time.time()
-        self.fs.disk.read_blocks(blocks)
-        end = time.time()
-
-        print(f"⏱ Read Time for {filename}: {(end - start)*1000:.4f} ms")
+        self.fs.disk.read_blocks(self.fs.file_table[filename]["blocks"])
+        print(f"⏱ Read Time: {(time.time()-start)*1000:.4f} ms")

@@ -1,148 +1,90 @@
-from fileinput import filename
-
+import json
+import os
+from disk import VirtualDisk, BLOCK_SIZE
 from recovery import RecoveryManager
-from disk import VirtualDisk
 from optimization import OptimizationManager
-from disk import BLOCK_SIZE
+
+FILE_TABLE_PATH = "data/file_table.json"
+
+
 class FileSystem:
     def __init__(self):
         self.disk = VirtualDisk()
         self.recovery = RecoveryManager()
-        self.file_table = {}  # filename → {"blocks": [], "size": int}
+        self.file_table = {}
+        self.load_file_table()
         self.optimizer = OptimizationManager(self)
 
-    # ----------------------------
-    # Create File
-    # ----------------------------
+    def save_file_table(self):
+        os.makedirs("data", exist_ok=True)
+        with open(FILE_TABLE_PATH, "w") as f:
+            json.dump(self.file_table, f, indent=4)
+
+    def load_file_table(self):
+        if os.path.exists(FILE_TABLE_PATH):
+            with open(FILE_TABLE_PATH, "r") as f:
+                self.file_table = json.load(f)
+
     def create_file(self, filename):
         if filename in self.file_table:
             print("File already exists.")
             return
-
         self.file_table[filename] = {"blocks": [], "size": 0}
+        self.save_file_table()
         print(f"File '{filename}' created.")
 
-    # ----------------------------
-    # Write File
-    # ----------------------------
-    def write_file(self, filename, data):
-        self.recovery.log(f"WRITE|{filename}|{data}")
-        
+    def write_file(self, filename, data,  log=True):
         if filename not in self.file_table:
             print("File does not exist.")
             return
 
         self.recovery.log(f"WRITE|{filename}|{data}")
 
-        # Free old blocks if rewriting
         old_blocks = self.file_table[filename]["blocks"]
         if old_blocks:
             self.disk.free_blocks(old_blocks)
 
-        # Calculate required blocks
-        BLOCK_SIZE = 64
-        required_blocks = (len(data) // BLOCK_SIZE) + (1 if len(data) % BLOCK_SIZE else 0)
-
+        required_blocks = (len(data)//BLOCK_SIZE) + (1 if len(data)%BLOCK_SIZE else 0)
         blocks = self.disk.get_free_blocks(required_blocks)
 
         if not blocks:
             print("Not enough space.")
             return
 
-        success = self.disk.write_blocks(blocks, data)
-
-        if success:
-            self.file_table[filename]["blocks"] = blocks
-            self.file_table[filename]["size"] = len(data)
+        if self.disk.write_blocks(blocks, data):
+            self.file_table[filename] = {"blocks": blocks, "size": len(data)}
+            self.save_file_table()
             print(f"Data written to '{filename}'.")
 
-    # ----------------------------
-    # Read File
-    # ----------------------------
     def read_file(self, filename):
         if filename not in self.file_table:
             print("File not found.")
             return
-
-        blocks = self.file_table[filename]["blocks"]
-        data = self.disk.read_blocks(blocks)
-
+        data = self.disk.read_blocks(self.file_table[filename]["blocks"])
         print(f"Data in '{filename}': {data}")
 
-    # ----------------------------
-    # Delete File
-    # ----------------------------
     def delete_file(self, filename):
         if filename not in self.file_table:
             print("File not found.")
             return
-
-        blocks = self.file_table[filename]["blocks"]
-        self.disk.free_blocks(blocks)
-
+        self.disk.free_blocks(self.file_table[filename]["blocks"])
         del self.file_table[filename]
+        self.save_file_table()
         print(f"File '{filename}' deleted.")
 
-    # ----------------------------
-    # Show File Table
-    # ----------------------------
     def show_files(self):
         print("\n--- FILE TABLE ---")
-        for name, info in self.file_table.items():
-            print(f"{name} → Blocks: {info['blocks']} | Size: {info['size']} bytes")
+        for f, info in self.file_table.items():
+            print(f"{f} → Blocks: {info['blocks']} | Size: {info['size']} bytes")
 
-    # ----------------------------
-    # Show Block Mapping
-    # ----------------------------
     def show_block_map(self):
         print("\n--- BLOCK MAP ---")
-        for file, blocks in self.file_table.items():
-            print(f"{file} -> {blocks}")
+        for f, info in self.file_table.items():
+            print(f"{f} -> {info['blocks']}")
 
-    # ----------------------------
-    # Search File
-    # ----------------------------
-    def search_file(self, filename):
-        print("\n--- FILE SEARCH ---")
-
-        if filename in self.file_table:
-            info = self.file_table[filename]
-            print(f"✅ File '{filename}' found")
-            print(f"Blocks: {info['blocks']}")
-            print(f"Size: {info['size']} bytes")
-        else:
-            print(f"❌ File '{filename}' not found")
-
-            # ----------------------------
-    # List Files Sorted by Size
-    # ----------------------------
-    def list_files_sorted_by_size(self):
-        if not self.file_table:
-            print("No files present.")
-            return
-
-        print("\n--- FILES SORTED BY SIZE ---")
-
-        sorted_files = sorted(
-            self.file_table.items(),
-            key=lambda item: item[1]["size"],
-            reverse=True
-        )
-
-        for file, info in sorted_files:
-            print(f"{file} → {info['size']} bytes")
-    
-    # ----------------------------
-    # Append Data to File
-    # ----------------------------
     def append_file(self, filename, data):
         if filename not in self.file_table:
             print("File not found.")
             return
-
         old_data = self.disk.read_blocks(self.file_table[filename]["blocks"])
-        new_data = old_data + data
-
-        print(f"Appending data to '{filename}'...")
-
-        self.write_file(filename, new_data)
+        self.write_file(filename, old_data + data)
