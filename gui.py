@@ -1,10 +1,7 @@
 import tkinter as tk
-from tkinter import ttk
 from file_system import FileSystem
 
 fs = FileSystem()
-
-# Ensure latest saved data is loaded
 fs.load_file_table()
 
 # ----------------------------
@@ -12,12 +9,12 @@ fs.load_file_table()
 # ----------------------------
 root = tk.Tk()
 root.title("File System Visualizer")
-root.geometry("1000x600")
+root.geometry("1100x650")
 
 # ----------------------------
-# LEFT PANEL (FILES)
+# LEFT PANEL
 # ----------------------------
-left_frame = tk.Frame(root, width=200, bg="#1e1e1e")
+left_frame = tk.Frame(root, width=220, bg="#1e1e1e")
 left_frame.pack(side="left", fill="y")
 
 tk.Label(left_frame, text="Files", fg="white", bg="#1e1e1e", font=("Arial", 14)).pack(pady=10)
@@ -25,31 +22,42 @@ tk.Label(left_frame, text="Files", fg="white", bg="#1e1e1e", font=("Arial", 14))
 file_list = tk.Listbox(left_frame)
 file_list.pack(fill="both", expand=True, padx=10, pady=10)
 
+# ----------------------------
+# INPUT SECTION
+# ----------------------------
+tk.Label(left_frame, text="Filename", fg="white", bg="#1e1e1e").pack()
+file_entry = tk.Entry(left_frame)
+file_entry.pack(pady=5)
+
+tk.Label(left_frame, text="Data", fg="white", bg="#1e1e1e").pack()
+data_entry = tk.Entry(left_frame)
+data_entry.pack(pady=5)
 
 # ----------------------------
-# RIGHT PANEL (DETAILS)
+# RIGHT PANEL
 # ----------------------------
 right_frame = tk.Frame(root)
 right_frame.pack(side="right", fill="both", expand=True)
 
-details_text = tk.Text(right_frame, height=10)
+details_text = tk.Text(right_frame, height=8)
 details_text.pack(fill="x", padx=10, pady=10)
 
-
-# ----------------------------
-# DISK VISUALIZATION
-# ----------------------------
 disk_frame = tk.Frame(right_frame)
 disk_frame.pack(fill="both", expand=True, padx=10, pady=10)
 
-
-def draw_disk():
+# ----------------------------
+# DISK DRAW (WITH HIGHLIGHT)
+# ----------------------------
+def draw_disk(selected_blocks=None):
     for widget in disk_frame.winfo_children():
         widget.destroy()
 
     for i in range(len(fs.disk.blocks)):
+
         if fs.disk.blocks[i] == "CORRUPTED":
             color = "red"
+        elif selected_blocks and i in selected_blocks:
+            color = "blue"  # 🔥 selected file blocks
         elif fs.disk.bitmap[i] == 1:
             color = "green"
         else:
@@ -65,9 +73,8 @@ def draw_disk():
         )
         block.grid(row=i // 10, column=i % 10, padx=2, pady=2)
 
-
 # ----------------------------
-# FILE DETAILS DISPLAY
+# FILE DETAILS
 # ----------------------------
 def show_details(event):
     selection = file_list.curselection()
@@ -86,8 +93,10 @@ def show_details(event):
     details_text.insert(tk.END, f"Size: {info['size']} bytes\n")
     details_text.insert(tk.END, f"Blocks: {info['blocks']}\n")
 
-file_list.bind("<<ListboxSelect>>", show_details)
+    # 🔥 highlight blocks
+    draw_disk(info["blocks"])
 
+file_list.bind("<<ListboxSelect>>", show_details)
 
 # ----------------------------
 # LOAD FILES
@@ -102,22 +111,40 @@ def load_files():
     for file in fs.file_table:
         file_list.insert(tk.END, file)
 
+# ----------------------------
+# BUTTON ACTIONS
+# ----------------------------
+def refresh():
+    fs.load_file_table()
+    load_files()
+    draw_disk()
 
-# ----------------------------
-# REFRESH BUTTON
-# ----------------------------
-refresh_btn = tk.Button(
-    left_frame,
-    text="Refresh",
-    command=lambda: [load_files(), draw_disk()]
-)
-refresh_btn.pack(pady=10)
-
-# ----------------------------
-# ACTION BUTTONS
-# ----------------------------
 def create_file():
-    fs.create_file("new_file")
+    name = file_entry.get()
+    if not name:
+        return
+
+    fs.create_file(name)
+    load_files()
+    draw_disk()
+
+def write_file():
+    name = file_entry.get()
+    data = data_entry.get()
+
+    if not name or not data:
+        return
+
+    fs.write_file(name, data)
+    load_files()
+    draw_disk()
+
+def delete_file():
+    name = file_entry.get()
+    if not name:
+        return
+
+    fs.delete_file(name)
     load_files()
     draw_disk()
 
@@ -134,8 +161,15 @@ def defragment():
     fs.optimizer.defragment()
     draw_disk()
 
+# ----------------------------
+# BUTTON UI
+# ----------------------------
+tk.Button(left_frame, text="Refresh", command=refresh).pack(pady=5)
 
 tk.Button(left_frame, text="Create File", command=create_file).pack(pady=5)
+tk.Button(left_frame, text="Write File", command=write_file).pack(pady=5)
+tk.Button(left_frame, text="Delete File", command=delete_file).pack(pady=5)
+
 tk.Button(left_frame, text="Simulate Crash", command=simulate_crash).pack(pady=5)
 tk.Button(left_frame, text="Recover", command=recover).pack(pady=5)
 tk.Button(left_frame, text="Defragment", command=defragment).pack(pady=5)
