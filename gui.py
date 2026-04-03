@@ -29,8 +29,8 @@ file_entry = tk.Entry(toolbar, width=20)
 file_entry.insert(0, "filename")
 file_entry.pack(side="left", padx=5)
 
-data_entry = tk.Entry(toolbar, width=40)
-data_entry.insert(0, "data")
+# 🔥 MULTILINE DATA INPUT
+data_entry = tk.Text(toolbar, height=2, width=40)
 data_entry.pack(side="left", padx=5)
 
 # ----------------------------
@@ -64,19 +64,16 @@ tree.pack(fill="both", expand=True)
 right_frame = tk.Frame(main_frame)
 main_frame.add(right_frame)
 
-# DETAILS
 tk.Label(right_frame, text="Details / Block Info", font=("Arial", 12, "bold")).pack()
 
 details_text = tk.Text(right_frame, height=6)
 details_text.pack(fill="x", padx=10, pady=5)
 
-# DISK LABEL
 tk.Label(right_frame, text="Disk Blocks (Visualization)", font=("Arial", 12, "bold")).pack()
 
 disk_frame = tk.Frame(right_frame)
 disk_frame.pack(pady=10)
 
-# LEGEND
 legend = tk.Label(right_frame,
     text="🟩 Used   ⬜ Free   🟥 Corrupted   🟦 Selected File",
     font=("Arial", 10))
@@ -107,7 +104,16 @@ def show_block_info(index):
     )
 
 # ----------------------------
-# DRAW DISK
+# HOVER EFFECT (🔥 UI BOOST)
+# ----------------------------
+def on_enter(e):
+    e.widget.config(relief="raised")
+
+def on_leave(e):
+    e.widget.config(relief="solid")
+
+# ----------------------------
+# DRAW DISK (IMPROVED COLORS)
 # ----------------------------
 def draw_disk(selected_blocks=None):
     for widget in disk_frame.winfo_children():
@@ -116,16 +122,29 @@ def draw_disk(selected_blocks=None):
     for i in range(len(fs.disk.blocks)):
 
         if fs.disk.blocks[i] == "CORRUPTED":
-            color = "red"
+            color = "#F44336"  # red
         elif selected_blocks and i in selected_blocks:
-            color = "blue"
+            color = "#2196F3"  # blue
         elif fs.disk.bitmap[i] == 1:
-            color = "green"
+            color = "#4CAF50"  # green
         else:
-            color = "lightgray"
+            color = "#E0E0E0"  # light gray
 
-        block = tk.Label(disk_frame, text=str(i), bg=color, width=4, height=2)
+        block = tk.Label(
+            disk_frame,
+            text=str(i),
+            bg=color,
+            fg="black",
+            width=4,
+            height=2,
+            relief="solid",
+            bd=1
+        )
+
         block.bind("<Button-1>", lambda e, idx=i: show_block_info(idx))
+        block.bind("<Enter>", on_enter)
+        block.bind("<Leave>", on_leave)
+
         block.grid(row=i // 10, column=i % 10, padx=2, pady=2)
 
 # ----------------------------
@@ -184,7 +203,11 @@ def create_file():
 
 def write_file():
     name = file_entry.get().strip()
-    data = data_entry.get().strip()
+    data = data_entry.get("1.0", tk.END).strip()
+
+    if not name or not data:
+        return
+
     fs.write_file(name, data)
     load_files()
     draw_disk()
