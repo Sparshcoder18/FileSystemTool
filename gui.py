@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import ttk
 from file_system import FileSystem
 
 fs = FileSystem()
@@ -9,62 +10,104 @@ fs.load_file_table()
 # ----------------------------
 root = tk.Tk()
 root.title("File System Visualizer")
-root.geometry("1100x650")
+root.geometry("1200x700")
 
 # ----------------------------
-# LEFT PANEL
+# TOP TITLE
 # ----------------------------
-left_frame = tk.Frame(root, width=220, bg="#1e1e1e")
-left_frame.pack(side="left", fill="y")
-
-tk.Label(left_frame, text="Files", fg="white", bg="#1e1e1e", font=("Arial", 14)).pack(pady=10)
-
-file_list = tk.Listbox(left_frame)
-file_list.pack(fill="both", expand=True, padx=10, pady=10)
+title = tk.Label(root, text="File System Recovery & Optimization Simulator",
+                 font=("Arial", 16, "bold"))
+title.pack(pady=5)
 
 # ----------------------------
-# INPUT SECTION
+# TOOLBAR
 # ----------------------------
-tk.Label(left_frame, text="Filename", fg="white", bg="#1e1e1e").pack()
-file_entry = tk.Entry(left_frame)
-file_entry.pack(pady=5)
+toolbar = tk.Frame(root)
+toolbar.pack(fill="x", pady=5)
 
-tk.Label(left_frame, text="Data", fg="white", bg="#1e1e1e").pack()
-data_entry = tk.Entry(left_frame)
-data_entry.pack(pady=5)
+file_entry = tk.Entry(toolbar, width=20)
+file_entry.insert(0, "filename")
+file_entry.pack(side="left", padx=5)
+
+data_entry = tk.Entry(toolbar, width=40)
+data_entry.insert(0, "data")
+data_entry.pack(side="left", padx=5)
 
 # ----------------------------
-# RIGHT PANEL
+# MAIN SPLIT
 # ----------------------------
-right_frame = tk.Frame(root)
-right_frame.pack(side="right", fill="both", expand=True)
+main_frame = tk.PanedWindow(root)
+main_frame.pack(fill="both", expand=True)
 
-details_text = tk.Text(right_frame, height=8)
-details_text.pack(fill="x", padx=10, pady=10)
+# ----------------------------
+# LEFT: FILE TABLE
+# ----------------------------
+left_frame = tk.Frame(main_frame)
+main_frame.add(left_frame, width=350)
+
+tk.Label(left_frame, text="Files (File Table)", font=("Arial", 12, "bold")).pack()
+
+tree = ttk.Treeview(left_frame, columns=("name", "size", "blocks"), show="headings")
+tree.heading("name", text="Filename")
+tree.heading("size", text="Size")
+tree.heading("blocks", text="Blocks")
+
+tree.column("name", width=100)
+tree.column("size", width=80)
+tree.column("blocks", width=150)
+
+tree.pack(fill="both", expand=True)
+
+# ----------------------------
+# RIGHT: DETAILS + DISK
+# ----------------------------
+right_frame = tk.Frame(main_frame)
+main_frame.add(right_frame)
+
+# DETAILS
+tk.Label(right_frame, text="Details / Block Info", font=("Arial", 12, "bold")).pack()
+
+details_text = tk.Text(right_frame, height=6)
+details_text.pack(fill="x", padx=10, pady=5)
+
+# DISK LABEL
+tk.Label(right_frame, text="Disk Blocks (Visualization)", font=("Arial", 12, "bold")).pack()
 
 disk_frame = tk.Frame(right_frame)
-disk_frame.pack(fill="both", expand=True, padx=10, pady=10)
+disk_frame.pack(pady=10)
+
+# LEGEND
+legend = tk.Label(right_frame,
+    text="🟩 Used   ⬜ Free   🟥 Corrupted   🟦 Selected File",
+    font=("Arial", 10))
+legend.pack()
 
 # ----------------------------
-# BLOCK INFO DISPLAY (🔥 NEW)
+# STATUS BAR
+# ----------------------------
+status = tk.Label(root, text="Ready", bd=1, relief="sunken", anchor="w")
+status.pack(fill="x", side="bottom")
+
+# ----------------------------
+# BLOCK INFO
 # ----------------------------
 def show_block_info(index):
     data = fs.disk.blocks[index]
 
     if data == "":
-        status = "FREE"
+        status_txt = "FREE"
     elif data == "CORRUPTED":
-        status = "CORRUPTED"
+        status_txt = "CORRUPTED"
     else:
-        status = "USED"
+        status_txt = "USED"
 
     details_text.delete("1.0", tk.END)
-    details_text.insert(tk.END, f"Block Index: {index}\n")
-    details_text.insert(tk.END, f"Status: {status}\n")
-    details_text.insert(tk.END, f"Data:\n{data}")
+    details_text.insert(tk.END,
+        f"Block Index: {index}\nStatus: {status_txt}\n\nData:\n{data}"
+    )
 
 # ----------------------------
-# DISK DRAW (WITH CLICK + HIGHLIGHT)
+# DRAW DISK
 # ----------------------------
 def draw_disk(selected_blocks=None):
     for widget in disk_frame.winfo_children():
@@ -75,76 +118,66 @@ def draw_disk(selected_blocks=None):
         if fs.disk.blocks[i] == "CORRUPTED":
             color = "red"
         elif selected_blocks and i in selected_blocks:
-            color = "blue"  # selected file blocks
+            color = "blue"
         elif fs.disk.bitmap[i] == 1:
             color = "green"
         else:
             color = "lightgray"
 
-        block = tk.Label(
-            disk_frame,
-            text=str(i),
-            bg=color,
-            width=4,
-            height=2,
-            relief="ridge"
-        )
-
-        # 🔥 FIXED CLICK BINDING (no late binding bug)
+        block = tk.Label(disk_frame, text=str(i), bg=color, width=4, height=2)
         block.bind("<Button-1>", lambda e, idx=i: show_block_info(idx))
-
         block.grid(row=i // 10, column=i % 10, padx=2, pady=2)
-
-# ----------------------------
-# FILE DETAILS
-# ----------------------------
-def show_details(event):
-    selection = file_list.curselection()
-    if not selection:
-        return
-
-    filename = file_list.get(selection[0])
-
-    if filename not in fs.file_table:
-        return
-
-    info = fs.file_table[filename]
-
-    details_text.delete("1.0", tk.END)
-    details_text.insert(tk.END, f"File: {filename}\n")
-    details_text.insert(tk.END, f"Size: {info['size']} bytes\n")
-    details_text.insert(tk.END, f"Blocks: {info['blocks']}\n")
-
-    draw_disk(info["blocks"])
-
-file_list.bind("<<ListboxSelect>>", show_details)
 
 # ----------------------------
 # LOAD FILES
 # ----------------------------
 def load_files():
-    file_list.delete(0, tk.END)
+    for row in tree.get_children():
+        tree.delete(row)
 
-    if not fs.file_table:
-        file_list.insert(tk.END, "No Files Found")
+    for file, info in fs.file_table.items():
+        tree.insert("", "end", values=(file, info["size"], str(info["blocks"])))
+
+    update_status()
+
+# ----------------------------
+# FILE SELECT
+# ----------------------------
+def on_select(event):
+    selected = tree.focus()
+    if not selected:
         return
 
-    for file in fs.file_table:
-        file_list.insert(tk.END, file)
+    values = tree.item(selected, "values")
+    filename = values[0]
+
+    info = fs.file_table[filename]
+
+    details_text.delete("1.0", tk.END)
+    details_text.insert(tk.END,
+        f"File: {filename}\nSize: {info['size']} bytes\nBlocks: {info['blocks']}"
+    )
+
+    draw_disk(info["blocks"])
+
+tree.bind("<<TreeviewSelect>>", on_select)
 
 # ----------------------------
-# BUTTON ACTIONS
+# STATUS UPDATE
 # ----------------------------
-def refresh():
-    fs.load_file_table()
-    load_files()
-    draw_disk()
+def update_status():
+    used = sum(fs.disk.bitmap)
+    total = len(fs.disk.bitmap)
 
+    status.config(
+        text=f"Files: {len(fs.file_table)} | Used Blocks: {used}/{total}"
+    )
+
+# ----------------------------
+# ACTIONS
+# ----------------------------
 def create_file():
     name = file_entry.get().strip()
-    if not name:
-        return
-
     fs.create_file(name)
     load_files()
     draw_disk()
@@ -152,24 +185,17 @@ def create_file():
 def write_file():
     name = file_entry.get().strip()
     data = data_entry.get().strip()
-
-    if not name or not data:
-        return
-
     fs.write_file(name, data)
     load_files()
     draw_disk()
 
 def delete_file():
     name = file_entry.get().strip()
-    if not name:
-        return
-
     fs.delete_file(name)
     load_files()
     draw_disk()
 
-def simulate_crash():
+def crash():
     fs.recovery.simulate_crash(fs.disk)
     draw_disk()
 
@@ -178,25 +204,22 @@ def recover():
     load_files()
     draw_disk()
 
-def defragment():
+def defrag():
     fs.optimizer.defragment()
     draw_disk()
 
 # ----------------------------
-# BUTTON UI
+# BUTTONS
 # ----------------------------
-tk.Button(left_frame, text="Refresh", command=refresh).pack(pady=5)
-
-tk.Button(left_frame, text="Create File", command=create_file).pack(pady=5)
-tk.Button(left_frame, text="Write File", command=write_file).pack(pady=5)
-tk.Button(left_frame, text="Delete File", command=delete_file).pack(pady=5)
-
-tk.Button(left_frame, text="Simulate Crash", command=simulate_crash).pack(pady=5)
-tk.Button(left_frame, text="Recover", command=recover).pack(pady=5)
-tk.Button(left_frame, text="Defragment", command=defragment).pack(pady=5)
+tk.Button(toolbar, text="Create", command=create_file).pack(side="left")
+tk.Button(toolbar, text="Write", command=write_file).pack(side="left")
+tk.Button(toolbar, text="Delete", command=delete_file).pack(side="left")
+tk.Button(toolbar, text="Crash", command=crash).pack(side="left")
+tk.Button(toolbar, text="Recover", command=recover).pack(side="left")
+tk.Button(toolbar, text="Defrag", command=defrag).pack(side="left")
 
 # ----------------------------
-# INITIAL LOAD
+# INIT
 # ----------------------------
 load_files()
 draw_disk()
