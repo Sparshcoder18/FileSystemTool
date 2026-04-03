@@ -46,7 +46,25 @@ disk_frame = tk.Frame(right_frame)
 disk_frame.pack(fill="both", expand=True, padx=10, pady=10)
 
 # ----------------------------
-# DISK DRAW (WITH HIGHLIGHT)
+# BLOCK INFO DISPLAY (🔥 NEW)
+# ----------------------------
+def show_block_info(index):
+    data = fs.disk.blocks[index]
+
+    if data == "":
+        status = "FREE"
+    elif data == "CORRUPTED":
+        status = "CORRUPTED"
+    else:
+        status = "USED"
+
+    details_text.delete("1.0", tk.END)
+    details_text.insert(tk.END, f"Block Index: {index}\n")
+    details_text.insert(tk.END, f"Status: {status}\n")
+    details_text.insert(tk.END, f"Data:\n{data}")
+
+# ----------------------------
+# DISK DRAW (WITH CLICK + HIGHLIGHT)
 # ----------------------------
 def draw_disk(selected_blocks=None):
     for widget in disk_frame.winfo_children():
@@ -57,7 +75,7 @@ def draw_disk(selected_blocks=None):
         if fs.disk.blocks[i] == "CORRUPTED":
             color = "red"
         elif selected_blocks and i in selected_blocks:
-            color = "blue"  # 🔥 selected file blocks
+            color = "blue"  # selected file blocks
         elif fs.disk.bitmap[i] == 1:
             color = "green"
         else:
@@ -71,6 +89,10 @@ def draw_disk(selected_blocks=None):
             height=2,
             relief="ridge"
         )
+
+        # 🔥 FIXED CLICK BINDING (no late binding bug)
+        block.bind("<Button-1>", lambda e, idx=i: show_block_info(idx))
+
         block.grid(row=i // 10, column=i % 10, padx=2, pady=2)
 
 # ----------------------------
@@ -93,7 +115,6 @@ def show_details(event):
     details_text.insert(tk.END, f"Size: {info['size']} bytes\n")
     details_text.insert(tk.END, f"Blocks: {info['blocks']}\n")
 
-    # 🔥 highlight blocks
     draw_disk(info["blocks"])
 
 file_list.bind("<<ListboxSelect>>", show_details)
@@ -120,7 +141,7 @@ def refresh():
     draw_disk()
 
 def create_file():
-    name = file_entry.get()
+    name = file_entry.get().strip()
     if not name:
         return
 
@@ -129,8 +150,8 @@ def create_file():
     draw_disk()
 
 def write_file():
-    name = file_entry.get()
-    data = data_entry.get()
+    name = file_entry.get().strip()
+    data = data_entry.get().strip()
 
     if not name or not data:
         return
@@ -140,7 +161,7 @@ def write_file():
     draw_disk()
 
 def delete_file():
-    name = file_entry.get()
+    name = file_entry.get().strip()
     if not name:
         return
 
