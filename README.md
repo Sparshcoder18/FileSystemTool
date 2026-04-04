@@ -1,241 +1,193 @@
 # 🚀 File System Recovery and Optimization Tool
 
 ![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)
-![Status](https://img.shields.io/badge/Status-In%20Development-orange)
+![OS Project](https://img.shields.io/badge/Domain-Operating%20Systems-purple)
+![Status](https://img.shields.io/badge/Status-Completed-success)
 ![License](https://img.shields.io/badge/License-MIT-green)
-![Contributions](https://img.shields.io/badge/Contributions-Welcome-brightgreen)
+![UI](https://img.shields.io/badge/GUI-Interactive-orange)
 
 ---
 
+## 🖥️ Live Dashboard Preview
+
+![Dashboard](assets/dashboard.png)
+
 ## 📌 Overview
 
-**File System Recovery and Optimization Tool** is a simulation-based operating system project that models how real-world file systems manage storage, handle failures, and optimize performance.
+The **File System Recovery and Optimization Tool** is a simulation-based Operating Systems project that models how real-world file systems:
 
-This project demonstrates:
+- Store data in blocks  
+- Manage free space  
+- Handle crashes  
+- Recover data using journaling  
+- Optimize performance via defragmentation  
 
-* Block-based storage mechanisms
-* File allocation strategies
-* Crash recovery using journaling
-* Performance optimization techniques
+Unlike traditional CLI-based simulations, this project features a **fully interactive GUI dashboard** that visually demonstrates internal file system operations.
 
-It is designed to provide both **conceptual clarity** and **practical implementation experience** of file system internals.
+---
+
+## 🎯 Key Highlights
+
+- 🧠 Concept + Implementation (not just theory)
+- 💻 Interactive GUI visualization (Tkinter-based dashboard)
+- 💥 Crash simulation with recovery
+- ⚡ Performance optimization (defragmentation)
+- 📊 Real-time disk state monitoring
 
 ---
 
 ## 🧠 System Architecture
 
 ```text
-User Commands (CLI)
-        ↓
-File System Engine
- ├── File Manager
- ├── Recovery Manager
- └── Optimization Manager
-        ↓
-Virtual Disk (Block Storage)
-```
-
----
-
-## ⚙️ Workflow
-
-```text
-[User Input]
-     ↓
-[File System Layer]
-     ↓
-[Block Allocation]
-     ↓
-[Virtual Disk Storage]
-     ↓
-(Optional)
-→ Crash Simulation 💥
-→ Recovery (Journaling) 🔄
-→ Optimization ⚡
-```
-
----
-
-## ✨ Features
-
-* 📦 Virtual Disk Simulation (Block-based storage)
-* 🧮 Bitmap-based Free Space Management
-* 📁 File Operations (Create, Read, Write, Delete)
-* 🧾 File Allocation Table (Mapping files to blocks)
-* 💥 Crash Simulation (Disk corruption scenarios) *(Upcoming)*
-* 🔄 Journaling-based Recovery *(Upcoming)*
-* ⚡ Optimization Techniques:
-
-  * Defragmentation *(Upcoming)*
-  * Caching *(Upcoming)*
-
----
-
-## 🗂️ Project Structure
-
-```bash
+        User Interface (GUI)
+                ↓
+        File System Layer
+   ┌────────────┼────────────┐
+   │            │            │
+File Manager  Recovery    Optimization
+               Manager        Manager
+                ↓
+        Virtual Disk (Blocks + Bitmap)
+⚙️ Workflow
+User Action (Create / Write / Delete)
+            ↓
+File System Processing
+            ↓
+Block Allocation (Bitmap)
+            ↓
+Disk Update (Virtual Storage)
+            ↓
+-----------------------------------
+Optional Operations:
+💥 Crash Simulation
+🔄 Recovery (Journaling Replay)
+⚡ Defragmentation
+✨ Features
+📦 Core File System
+Block-based virtual disk simulation
+Bitmap-based free space management
+File allocation (contiguous allocation)
+Persistent storage (JSON-based)
+📁 File Operations
+Create file
+Write data (multi-block support)
+Read data
+Delete file
+💥 Crash & Recovery
+Simulated disk corruption
+Write-Ahead Logging (WAL)
+Recovery via log replay
+Corrupted block cleanup
+⚡ Optimization Engine
+Fragmentation detection
+Defragmentation algorithm
+Read performance measurement
+🖥️ Interactive GUI
+File explorer-style interface
+Disk block visualization (color-coded)
+Clickable blocks with detailed inspection
+Animated write operations
+Block selection highlighting (glow effect)
+Real-time activity log
+Live system statistics
+🎨 Disk Visualization Legend
+Color	Meaning
+🟢 Green	Used Block
+⚪ Grey	Free Block
+🔴 Red	Corrupted Block
+🔵 Blue	Selected Block
+🗂️ Project Structure
 FileSystemTool/
 │
-├── main.py
-├── disk.py
-├── file_system.py
-├── allocation.py
-├── recovery.py
-├── optimization.py
-├── utils.py
+├── main.py                # Entry point (CLI testing)
+├── gui.py                 # Interactive GUI dashboard
+│
+├── disk.py                # Virtual disk implementation
+├── file_system.py         # File system logic
+├── allocation.py          # Block allocation logic
+├── recovery.py            # Crash + recovery system
+├── optimization.py        # Defragmentation + performance
+├── utils.py               # Helper utilities
 │
 ├── data/
-│   └── disk_state.json
+│   ├── disk_state.json
+│   └── file_table.json
 │
 ├── logs/
 │   └── journal.log
 │
 └── README.md
-```
+📸 Demo Screenshots
+🖥️ GUI Dashboard
 
----
+📊 Disk Visualization
 
-## 🖥️ Demo (Sample Execution)
+📁 File System View
 
-```bash
+📌 (Add your screenshots in /assets folder)
+
+🖥️ Example Execution (CLI)
 > create file1
 ✔ File created
 
 > write file1 HelloWorld
 ✔ Data written
 
-> read file1
-HelloWorld
-
 > show_disk
 Block 0: USED | Data: HelloWorld
 Block 1: FREE
 ...
-```
-
----
-
-## 📸 Demo Screenshots
-
-> *(Add screenshots after running your project)*
-
-### 🔹 Disk State Visualization
-
-```
-[ Screenshot Placeholder ]
-```
-
-### 🔹 File Table Output
-
-```
-[ Screenshot Placeholder ]
-```
-
-### 🔹 CLI Execution
-
-```
-[ Screenshot Placeholder ]
-```
-
-👉 To add screenshots:
-
-1. Take screenshots of terminal output
-2. Save inside `/assets` folder
-3. Add like:
-
-```markdown
-![Disk View](assets/disk.png)
-```
-
----
-
-## 🛠️ Tech Stack
-
-* **Language:** Python 3.10+
-* **Concepts:** Operating Systems, File Systems
-* **Tools:** VS Code, Git, GitHub
-
----
-
-## 🚀 Getting Started
-
-### 🔹 Clone Repository
-
-```bash
+🛠️ Tech Stack
+Category	Technology
+Language	Python 3.10+
+GUI	Tkinter
+Storage	JSON
+Concepts	OS File Systems
+Tools	VS Code, Git, GitHub
+🚀 Getting Started
+🔹 Clone Repository
 git clone https://github.com/your-username/FileSystemTool.git
 cd FileSystemTool
-```
-
----
-
-### 🔹 Run Project
-
-```bash
+🔹 Run GUI
+python gui.py
+🔹 Run CLI (optional)
 python main.py
-```
+📊 Concepts Demonstrated
+File Allocation Strategies (Contiguous)
+Free Space Management (Bitmap)
+Disk Scheduling Simulation
+Journaling & Crash Recovery
+Fragmentation & Defragmentation
+File System Abstraction
+🧪 Future Enhancements
+📂 Hierarchical directory structure
+🧠 LRU caching mechanism
+📊 Graph-based performance analytics
+🌐 Web-based UI (React / Flask)
+🔐 File permissions & security
+🎓 Learning Outcomes
 
----
+This project provides hands-on understanding of:
 
-## 📊 Key Concepts Implemented
+Internal working of file systems
+Impact of fragmentation on performance
+Recovery mechanisms in OS
+Trade-offs in allocation techniques
+🤝 Contributing
+Fork → Create Branch → Commit → Push → Pull Request
+📜 License
 
-* File Allocation (Contiguous)
-* Bitmap Free Space Management
-* Block Storage Simulation
-* File System Abstraction
+This project is licensed under the MIT License.
 
----
+⭐ Support
 
-## 🧪 Future Enhancements
+If you found this project useful, consider giving it a ⭐!
 
-* 🔄 Journaling & Crash Recovery
-* ⚡ Defragmentation Algorithm
-* 🧠 LRU Cache Implementation
-* 🖥️ GUI Interface (Tkinter)
-* 📂 Hierarchical Directory Structure
-
----
-
-## 🎓 Learning Outcomes
-
-This project demonstrates:
-
-* How file systems store and retrieve data
-* How fragmentation impacts performance
-* How journaling ensures data consistency
-* Trade-offs in allocation strategies
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome!
-
-```bash
-fork → create branch → commit → push → pull request
-```
-
----
-
-## 📜 License
-
-This project is licensed under the **MIT License**.
-
----
-
-## ⭐ Support
-
-If you found this useful, consider giving it a ⭐ on GitHub!
-
----
-
-## 👨‍💻 Author
+👨‍💻 Authors
 
 Developed as part of an Operating Systems project to simulate real-world file system behavior with recovery and optimization capabilities.
 
----
+🔥 Final Note
 
-# 🔥 Final Note
-
-This project is not just an implementation—it is a **conceptual replica of real file system internals**, designed to bridge theory and practice.
-
----
+This is not just a project—
+it is a working simulation of how real file systems behave internally, combining theory, implementation, and visualization in one system.
