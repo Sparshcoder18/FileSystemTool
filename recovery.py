@@ -1,5 +1,6 @@
 import os
 import random
+import base64
 
 LOG_PATH = "logs/journal.log"
 
@@ -69,14 +70,15 @@ class RecoveryManager:
 
             if entry[0] == "WRITE":
                 filename = entry[1]
-                data = entry[2]
+                encoded_data = entry[2]
+                data = base64.b64decode(encoded_data.encode()).decode()
 
                 # Recreate file if missing
                 if filename not in file_system.file_table:
                     file_system.create_file(filename)
 
                 file_system.write_file(filename, data, log=False)
-
+    
         # 🔥 STEP 4: Save final disk + metadata
         file_system.disk.save_disk()
         file_system.save_file_table()

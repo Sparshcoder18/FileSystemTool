@@ -1,5 +1,6 @@
 import json
 import os
+import base64
 from disk import VirtualDisk, BLOCK_SIZE
 from recovery import RecoveryManager
 from optimization import OptimizationManager
@@ -38,7 +39,8 @@ class FileSystem:
             print("File does not exist.")
             return
 
-        self.recovery.log(f"WRITE|{filename}|{data}")
+        encoded_data = base64.b64encode(data.encode()).decode()
+        self.recovery.log(f"WRITE|{filename}|{encoded_data}")
 
         old_blocks = self.file_table[filename]["blocks"]
         if old_blocks:
