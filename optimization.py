@@ -1,6 +1,7 @@
 from disk import BLOCK_SIZE
 import time
 
+
 class OptimizationManager:
     def __init__(self, file_system):
         self.fs = file_system
@@ -11,13 +12,14 @@ class OptimizationManager:
     def calculate_fragmentation(self):
         fragmented_files = 0
 
-        for file, blocks in self.fs.file_table.items():
+        for file, info in self.fs.file_table.items():
+            blocks = info["blocks"]
+
             if len(blocks) <= 1:
                 continue
 
             sorted_blocks = sorted(blocks)
 
-            # Check if blocks are non-contiguous
             for i in range(len(sorted_blocks) - 1):
                 if sorted_blocks[i] + 1 != sorted_blocks[i + 1]:
                     fragmented_files += 1
@@ -30,7 +32,6 @@ class OptimizationManager:
             return
 
         fragmentation_percent = (fragmented_files / total_files) * 100
-
         print(f"📉 Fragmentation: {fragmentation_percent:.2f}%")
 
     # ----------------------------
@@ -45,24 +46,28 @@ class OptimizationManager:
         current_block = 0
         new_file_table = {}
 
-        for file, blocks in self.fs.file_table.items():
+        for file, info in self.fs.file_table.items():
+            blocks = info["blocks"]
             data = self.fs.disk.read_blocks(blocks)
 
-            block_size = 64
-            chunks = [data[i : i + block_size] for i in range(0, len(data), block_size)]
+            chunks = [data[i:i+BLOCK_SIZE] for i in range(0, len(data), BLOCK_SIZE)]
 
             new_indices = []
 
             for chunk in chunks:
-                new_blocks[current_block] = chunk
-                new_bitmap[current_block] = 1
-                new_indices.append(current_block)
-                current_block += 1
                 if current_block >= len(new_blocks):
                     print("Disk overflow during defragmentation!")
                     return
 
-            new_file_table[file] = new_indices
+                new_blocks[current_block] = chunk
+                new_bitmap[current_block] = 1
+                new_indices.append(current_block)
+                current_block += 1
+
+            new_file_table[file] = {
+                "blocks": new_indices,
+                "size": len(data)
+            }
 
         # Apply changes
         self.fs.disk.blocks = new_blocks
@@ -76,13 +81,12 @@ class OptimizationManager:
     # ----------------------------
     # Measure Read Performance
     # ----------------------------
-
     def measure_read_time(self, filename):
         if filename not in self.fs.file_table:
             print("File not found.")
             return
 
-        blocks = self.fs.file_table[filename]
+        blocks = self.fs.file_table[filename]["blocks"]
 
         start = time.time()
         self.fs.disk.read_blocks(blocks)

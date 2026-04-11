@@ -6,7 +6,7 @@ class FileSystem:
     def __init__(self):
         self.disk = VirtualDisk()
         self.recovery = RecoveryManager()
-        self.file_table = {}
+        self.file_table = {}  # filename → {"blocks": [], "size": int}
         self.optimizer = OptimizationManager(self)
 
     # ----------------------------
@@ -17,7 +17,7 @@ class FileSystem:
             print("File already exists.")
             return
 
-        self.file_table[filename] = []
+        self.file_table[filename] = {"blocks": [], "size": 0}
         print(f"File '{filename}' created.")
 
     # ----------------------------
@@ -33,7 +33,7 @@ class FileSystem:
         self.recovery.log(f"WRITE|{filename}|{data}")
 
         # Free old blocks if rewriting
-        old_blocks = self.file_table[filename]
+        old_blocks = self.file_table[filename]["blocks"]
         if old_blocks:
             self.disk.free_blocks(old_blocks)
 
@@ -50,7 +50,8 @@ class FileSystem:
         success = self.disk.write_blocks(blocks, data)
 
         if success:
-            self.file_table[filename] = blocks
+            self.file_table[filename]["blocks"] = blocks
+            self.file_table[filename]["size"] = len(data)
             print(f"Data written to '{filename}'.")
 
     # ----------------------------
@@ -61,7 +62,7 @@ class FileSystem:
             print("File not found.")
             return
 
-        blocks = self.file_table[filename]
+        blocks = self.file_table[filename]["blocks"]
         data = self.disk.read_blocks(blocks)
 
         print(f"Data in '{filename}': {data}")
@@ -74,7 +75,7 @@ class FileSystem:
             print("File not found.")
             return
 
-        blocks = self.file_table[filename]
+        blocks = self.file_table[filename]["blocks"]
         self.disk.free_blocks(blocks)
 
         del self.file_table[filename]
@@ -85,13 +86,13 @@ class FileSystem:
     # ----------------------------
     def show_files(self):
         print("\n--- FILE TABLE ---")
-        for name, blocks in self.file_table.items():
-            print(f"{name} → {blocks}")
+        for name, info in self.file_table.items():
+            print(f"{name} → Blocks: {info['blocks']} | Size: {info['size']} bytes")
 
-            # ----------------------------
-# Show Block Mapping
-# ----------------------------
-def show_block_map(self):
-    print("\n--- BLOCK MAP ---")
-    for file, blocks in self.file_table.items():
-        print(f"{file} -> {blocks}")
+    # ----------------------------
+    # Show Block Mapping
+    # ----------------------------
+    def show_block_map(self):
+        print("\n--- BLOCK MAP ---")
+        for file, blocks in self.file_table.items():
+            print(f"{file} -> {blocks}")
